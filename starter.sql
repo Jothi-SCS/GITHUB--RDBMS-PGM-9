@@ -1,26 +1,28 @@
-CREATE DATABASE IF NOT EXISTS CollegeDB;
+-- RDBMS Assignment
+-- Database: CollegeDB
 
-USE CollegeDB;
-
-CREATE TABLE Department (
-    DepartmentID INT PRIMARY KEY,
-    DepartmentName VARCHAR(50)
-);
-
-CREATE TABLE Student (
-    StudentID INT PRIMARY KEY,
-    StudentName VARCHAR(50),
-    DepartmentID INT,
-    FOREIGN KEY (DepartmentID) REFERENCES Department(DepartmentID)
-);
-
-INSERT INTO Department (DepartmentID, DepartmentName) VALUES
-(101, 'Computer Science'),
-(102, 'Mathematics'),
-(103, 'Physics');
-
-INSERT INTO Student (StudentID, StudentName, DepartmentID) VALUES
-(1001, 'Arun', 101),
-(1002, 'Divya', 102),
-(1003, 'Karthik', 101),
-(1004, 'Nisha', 103);
+-- Task:
+-- 1. Create a database named CollegeDB.
+-- 2. Create a Department table with:
+--    DepartmentID INT PRIMARY KEY
+--    DepartmentName VARCHAR(50)
+--
+-- 3. Create a Student table with:
+--    StudentID INT PRIMARY KEY
+--    StudentName VARCHAR(50)
+--    DepartmentID INT
+--    DepartmentID should be a FOREIGN KEY referencing
+--    Department(DepartmentID).
+--
+-- 4. Insert the following records into Department:
+--    101, Computer Science
+--    102, Mathematics
+--    103, Physics
+--
+-- 5. Insert the following records into Student:
+--    1001, Arun, 101
+--    1002, Divya, 102
+--    1003, Karthik, 101
+--    1004, Nisha, 103
+--
+-- Write your SQL statements below.
