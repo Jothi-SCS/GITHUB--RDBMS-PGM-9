@@ -1,0 +1,49 @@
+name: SQL Autograding
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: CollegeDB
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+
+      - name: Checkout student repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python packages
+        run: |
+          pip install mysql-connector-python pytest
+
+      - name: Wait for MySQL
+        run: |
+          sleep 10
+
+      - name: Create database and tables
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -proot < starter.sql
+
+      - name: Run SQL Autograding
+        run: |
+          pytest test_solution.py -v
