@@ -1,5 +1,4 @@
-DROP DATABASE IF EXISTS CollegeDB;
-
+import mysql.connector
 CREATE DATABASE CollegeDB;
 
 USE CollegeDB;
