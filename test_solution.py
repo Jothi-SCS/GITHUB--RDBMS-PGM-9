@@ -1,7 +1,7 @@
-
 import mysql.connector
 import sys
 import os
+import pytest
 
 DB_CONFIG = {
     "host": "127.0.0.1",
