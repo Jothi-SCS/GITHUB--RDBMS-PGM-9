@@ -3,6 +3,7 @@ import sys
 import os
 import pytest
 
+
 DB_CONFIG = {
     "host": "127.0.0.1",
     "user": "root",
@@ -24,6 +25,10 @@ def connect_db():
 
 
 def execute_student_sql():
+    """
+    Read answer.sql and execute every SQL statement.
+    """
+
     if not os.path.exists(STUDENT_FILE):
         raise AssertionError(
             f"{STUDENT_FILE} not found. "
@@ -34,13 +39,20 @@ def execute_student_sql():
         sql = file.read()
 
     if not sql.strip():
-        raise AssertionError(f"{STUDENT_FILE} is empty.")
+        raise AssertionError(
+            f"{STUDENT_FILE} is empty."
+        )
 
     conn = connect_server()
     cursor = conn.cursor()
 
     try:
-        statements = [s.strip() for s in sql.split(";") if s.strip()]
+        # Execute each SQL statement separately
+        statements = [
+            statement.strip()
+            for statement in sql.split(";")
+            if statement.strip()
+        ]
 
         for statement in statements:
             cursor.execute(statement)
@@ -49,6 +61,7 @@ def execute_student_sql():
 
     except Exception as e:
         conn.rollback()
+
         raise AssertionError(
             f"Student SQL execution failed: {e}"
         )
@@ -58,7 +71,28 @@ def execute_student_sql():
         conn.close()
 
 
+# ============================================================
+# IMPORTANT:
+# pytest does NOT execute the if __name__ == "__main__"
+# section when running:
+#
+# pytest test_solution.py -v
+#
+# Therefore this fixture automatically executes answer.sql
+# before the tests start.
+# ============================================================
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_student_sql():
+    execute_student_sql()
+
+
+# ============================================================
+# DATABASE TEST
+# ============================================================
+
 def test_database_exists():
+
     conn = connect_server()
     cursor = conn.cursor()
 
@@ -76,10 +110,19 @@ def test_database_exists():
     cursor.close()
     conn.close()
 
-    assert result == 1, "CollegeDB database does not exist."
+    assert result == 1, (
+        "CollegeDB database does not exist."
+    )
 
+    print("PASS: CollegeDB database exists.")
+
+
+# ============================================================
+# DEPARTMENT TABLE TEST
+# ============================================================
 
 def test_department_table():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -98,10 +141,19 @@ def test_department_table():
     cursor.close()
     conn.close()
 
-    assert result == 1, "Department table does not exist."
+    assert result == 1, (
+        "Department table does not exist."
+    )
 
+    print("PASS: Department table exists.")
+
+
+# ============================================================
+# STUDENT TABLE TEST
+# ============================================================
 
 def test_student_table():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -120,10 +172,19 @@ def test_student_table():
     cursor.close()
     conn.close()
 
-    assert result == 1, "Student table does not exist."
+    assert result == 1, (
+        "Student table does not exist."
+    )
 
+    print("PASS: Student table exists.")
+
+
+# ============================================================
+# DEPARTMENT COLUMNS TEST
+# ============================================================
 
 def test_department_columns():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -148,7 +209,10 @@ def test_department_columns():
         ("DepartmentName", "varchar")
     ]
 
-    actual = [(row[0], row[1]) for row in columns]
+    actual = [
+        (row[0], row[1])
+        for row in columns
+    ]
 
     assert actual == expected, (
         f"Incorrect Department columns.\n"
@@ -156,8 +220,15 @@ def test_department_columns():
         f"Actual: {actual}"
     )
 
+    print("PASS: Department columns are correct.")
+
+
+# ============================================================
+# STUDENT COLUMNS TEST
+# ============================================================
 
 def test_student_columns():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -183,7 +254,10 @@ def test_student_columns():
         ("DepartmentID", "int")
     ]
 
-    actual = [(row[0], row[1]) for row in columns]
+    actual = [
+        (row[0], row[1])
+        for row in columns
+    ]
 
     assert actual == expected, (
         f"Incorrect Student columns.\n"
@@ -191,11 +265,19 @@ def test_student_columns():
         f"Actual: {actual}"
     )
 
+    print("PASS: Student columns are correct.")
+
+
+# ============================================================
+# PRIMARY KEY TEST
+# ============================================================
 
 def test_primary_keys():
+
     conn = connect_db()
     cursor = conn.cursor()
 
+    # Department primary key
     cursor.execute(
         """
         SELECT COLUMN_NAME
@@ -203,13 +285,17 @@ def test_primary_keys():
         WHERE table_schema = %s
         AND table_name = 'Department'
         AND constraint_name = 'PRIMARY'
-        """
-        ,
+        ORDER BY ORDINAL_POSITION
+        """,
         (DATABASE,)
     )
 
-    department_pk = [row[0] for row in cursor.fetchall()]
+    department_pk = [
+        row[0]
+        for row in cursor.fetchall()
+    ]
 
+    # Student primary key
     cursor.execute(
         """
         SELECT COLUMN_NAME
@@ -217,23 +303,36 @@ def test_primary_keys():
         WHERE table_schema = %s
         AND table_name = 'Student'
         AND constraint_name = 'PRIMARY'
+        ORDER BY ORDINAL_POSITION
         """,
         (DATABASE,)
     )
 
-    student_pk = [row[0] for row in cursor.fetchall()]
+    student_pk = [
+        row[0]
+        for row in cursor.fetchall()
+    ]
 
     cursor.close()
     conn.close()
 
-    assert department_pk == ["DepartmentID"], \
+    assert department_pk == ["DepartmentID"], (
         "DepartmentID must be the primary key."
+    )
 
-    assert student_pk == ["StudentID"], \
+    assert student_pk == ["StudentID"], (
         "StudentID must be the primary key."
+    )
 
+    print("PASS: Primary keys are correct.")
+
+
+# ============================================================
+# FOREIGN KEY TEST
+# ============================================================
 
 def test_foreign_key():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -260,8 +359,15 @@ def test_foreign_key():
         "Department.DepartmentID."
     )
 
+    print("PASS: Foreign key is correct.")
+
+
+# ============================================================
+# DEPARTMENT RECORDS TEST
+# ============================================================
 
 def test_department_records():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -289,8 +395,15 @@ def test_department_records():
         f"\n\nActual:\n{actual}"
     )
 
+    print("PASS: Department records are correct.")
+
+
+# ============================================================
+# STUDENT RECORDS TEST
+# ============================================================
 
 def test_student_records():
+
     conn = connect_db()
     cursor = conn.cursor()
 
@@ -319,13 +432,21 @@ def test_student_records():
         f"\n\nActual:\n{actual}"
     )
 
+    print("PASS: Student records are correct.")
+
+
+# ============================================================
+# INNER JOIN TEST
+# ============================================================
 
 def test_inner_join():
+
     conn = connect_db()
     cursor = conn.cursor()
 
     query = """
-        SELECT Student.StudentName, Department.DepartmentName
+        SELECT Student.StudentName,
+               Department.DepartmentName
         FROM Student
         INNER JOIN Department
         ON Student.DepartmentID = Department.DepartmentID
@@ -333,6 +454,7 @@ def test_inner_join():
     """
 
     cursor.execute(query)
+
     actual = cursor.fetchall()
 
     expected = [
@@ -350,6 +472,12 @@ def test_inner_join():
         f"\n\nActual:\n{actual}"
     )
 
+    print("PASS: INNER JOIN produced the correct output.")
+
+
+# ============================================================
+# OPTIONAL: RUN DIRECTLY WITH PYTHON
+# ============================================================
 
 if __name__ == "__main__":
 
@@ -358,6 +486,7 @@ if __name__ == "__main__":
     print("====================================")
 
     try:
+
         execute_student_sql()
 
         test_database_exists()
@@ -371,20 +500,27 @@ if __name__ == "__main__":
         test_student_records()
         test_inner_join()
 
-        print("\n====================================")
+        print()
+        print("====================================")
         print("ALL TESTS PASSED!")
         print("====================================")
 
     except AssertionError as e:
-        print("\n====================================")
+
+        print()
+        print("====================================")
         print("TEST FAILED")
         print("====================================")
         print(e)
+
         sys.exit(1)
 
     except Exception as e:
-        print("\n====================================")
+
+        print()
+        print("====================================")
         print("AUTOGRADING ERROR")
         print("====================================")
         print(e)
+
         sys.exit(1)
