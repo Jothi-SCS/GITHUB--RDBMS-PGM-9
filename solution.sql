@@ -1,3 +1,4 @@
+
 DROP DATABASE IF EXISTS CollegeDB;
 
 CREATE DATABASE CollegeDB;
@@ -13,7 +14,8 @@ CREATE TABLE Student (
     StudentID INT PRIMARY KEY,
     StudentName VARCHAR(50),
     DepartmentID INT,
-    FOREIGN KEY (DepartmentID) REFERENCES Department(DepartmentID)
+    FOREIGN KEY (DepartmentID)
+        REFERENCES Department(DepartmentID)
 );
 
 INSERT INTO Department (DepartmentID, DepartmentName) VALUES
